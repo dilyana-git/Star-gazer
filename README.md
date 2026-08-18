@@ -52,23 +52,28 @@ end-to-end test that proves it, because the first version silently did not.
 ```
 src/
   astro/
-    frames.ts       the coordinate pipeline: EQJ → HOR, refraction, separation
-    twilight.ts     darkness, observing windows, limiting magnitude
-    time.ts         the only place timezones exist
-    events/         the notability engine — one module per detector
+    frames.ts        the coordinate pipeline: EQJ → HOR, refraction, separation
+    twilight.ts      darkness, observing windows, limiting magnitude
+    time.ts          the only place timezones exist
+    objects.ts       one shared type for anything you can select
+    events/          the notability engine — one module per detector
   render/
-    project.ts      stereographic projection, full-sky and zoomed
-    sky.ts          the Canvas 2D draw
-    labels.ts       greedy label placement against an occupancy grid
-    colors.ts       the palette, and star colour from B−V
+    project.ts       stereographic projection, full-sky and zoomed
+    sky.ts           the Canvas 2D draw
+    labels.ts        greedy label placement against an occupancy grid
+    colors.ts        the palette, and star colour from B−V
   data/
-    search.ts       the object index — names, designations, catalogue numbers
+    catalog.ts       loading the generated artifacts
+    search.ts        the object index — names, designations, catalogue numbers
+    generated/       build artifacts — committed, never fetched at runtime
   state/
-    permalink.ts    the whole view, encoded into the URL hash
-    generated/      build artifacts — committed, never fetched at runtime
-  ui/               three surfaces: the sky, the ribbon, the events panel
+    store.ts         the application state
+    permalink.ts     the whole view, encoded into the URL hash
+  ui/                three surfaces: the sky, the ribbon, the events panel
 scripts/
-  build-catalogs.ts the data pipeline
+  build-catalogs.ts  the data pipeline
+  fetch-fonts.ts     vendors the three typefaces, so nothing loads from a CDN
+vite.config.ts       also generates the offline service worker at build time
 ```
 
 ### The two things most likely to be wrong, and what stops them
@@ -111,9 +116,10 @@ committed. See **[ATTRIBUTION.md](ATTRIBUTION.md)** for sources, licences and
 obligations — several are share-alike, and that share-alike travels with the
 generated data files rather than with this application's source.
 
-See **[NOTES.md](NOTES.md)** for deviations from the specification, the two
-source substitutions forced by this environment's network policy, and the
-deliberate test gaps.
+See **[NOTES.md](NOTES.md)** for deviations from the specification, the source
+substitutions forced by this environment's network policy, the modelling
+decisions the spec left open, and the deliberate gaps — including why satellite
+passes are not built.
 
 ---
 
@@ -121,5 +127,8 @@ deliberate test gaps.
 
 Named so they do not creep in: telescope control, mount alignment,
 astrophotography planning, comets and asteroids beyond the brightest, variable
-stars, seeing forecasts, weather, accounts, sync, social sharing, 3D globes, VR,
-and anything astrological.
+stars, seeing forecasts, weather, accounts, sync, posting to social platforms,
+3D globes, VR, and anything astrological.
+
+Sharing a *link* is in scope and built — it is a URL that encodes where and when,
+with no account and nothing sent anywhere.
