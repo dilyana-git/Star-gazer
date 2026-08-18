@@ -65,7 +65,58 @@ needed.
    emitted per-culture as `constellations.<id>.json`). v1 bundles western only.
 4. **The name** — *Sidereal* is kept.
 
-## 4. Test gaps
+## 4. Modelling decisions the spec left open
+
+Where §7's model needed a number the spec did not give, the choice and its
+reasoning are here rather than buried in a constant.
+
+**Rarity is about the recurrence of an event *of this notability*, not of that
+name.** Two consequences:
+
+- *Meteor showers are graded by what they deliver*, via
+  `showerRecurrence(observedRate)`. Any given shower peaks annually, but "a
+  display worth setting an alarm for" is not an annual event and "a handful an
+  hour" is not a yearly one — there are a score of those. Without the grading a
+  ZHR-5 shower scored level with the Geminids.
+- *Moon conjunctions are monthly, not five-yearly.* The Moon laps the zodiac
+  every 27 days, so it passes each planet and each bright ecliptic star once a
+  lunation. Scored against the planet–planet interval, a routine Moon–Jupiter
+  pairing outranked the Geminids.
+- *A "supermoon" recurs three or four times a year*, not once, and differs from
+  an ordinary full moon by 7% of diameter. §7.3 is explicit that lunar events
+  are context rather than alarms, and this is the number that keeps one below a
+  major shower.
+
+**Events are evaluated at their best *observable* moment, not their
+astronomical peak.** Greatest elongation and closest approach land wherever they
+land, very often at two in the afternoon. Reporting that moment's altitude
+tells the reader Mercury was 63° up — true, and useless, because the Sun was up
+too. `bestObservableMoment` finds the part of the bracket that is dark with the
+target above the horizon and evaluates there; conjunctions and elongations with
+no such moment are dropped rather than listed with a daylight altitude.
+
+**Actual daylight is not deep twilight.** The interference term grades twilight
+by how faint the target is, but floors the loss at 0.6 once the Sun is above the
+horizon. Without that floor the model rated a magnitude-0 planet 70% as good at
+noon as at midnight, and happily recommended it.
+
+**The Sun caps the limiting magnitude.** `twilightCap` holds the naked-eye limit
+at about −4 in daylight, 1 at civil dusk, 4 at nautical dusk, and lifts it
+entirely once astronomical night arrives. The same honesty that makes the Bortle
+slider worth having applies at four in the afternoon: a chart drawing nine
+thousand stars at midday tells the reader something false.
+
+**Recurring events are emitted per night and collapsed by the UI.** Saturn
+really is well placed on every clear night for months, and tonight's panel has
+to be able to say so for tonight. Which repeats to hide is a presentation
+decision that only the panel — which knows what night is on screen — can make.
+
+**Deep-sky reachability uses surface brightness, not magnitude, for extended
+objects.** A magnitude-8 galaxy spread over 20 arcminutes has its light smeared
+over four hundred times the area of a magnitude-8 point source. Point-like
+objects are still gated on magnitude.
+
+## 5. Test gaps
 
 Per §12.2, a fabricated fixture is worse than a missing one. Gaps as they stand:
 
@@ -75,7 +126,17 @@ Per §12.2, a fabricated fixture is worse than a missing one. Gaps as they stand
   external data) is implemented in full, and it is the tier that catches
   coordinate bugs. `fixtures/README.md` records what to add and how.
 - **USNO / timeanddate rise-set fixtures** — same reason, same gap.
-- **NASA eclipse-catalogue fixtures** — same reason. Eclipse detection is
-  covered by an internal consistency test (the eclipse the library finds is
-  cross-checked against the Moon's phase and the observer's local circumstances)
-  rather than against a published time.
+- **NASA eclipse-catalogue fixtures** — same reason. Eclipse detection leans
+  directly on the library's own `SearchLunarEclipse` and
+  `SearchLocalSolarEclipse`, which carry their own upstream test suite; what is
+  tested here is our handling of the result, not the ephemeris.
+
+## 6. Phase status (spec §11)
+
+| Phase | State |
+|---|---|
+| 0 — Data | Complete. `npm run build:catalogs` runs clean from an empty `generated/`; counts, magnitude range and file sizes asserted in `tests/catalogs.test.ts`. |
+| 1 — The sky | Complete. The §12.1 invariant suite passes in full. Verified by eye against known positions for Sofia on 20 January 2026: Orion and Sirius due south, Leo rising in the east *on the left*, Polaris at the observer's latitude, cardinal points on the ring. |
+| 2 — Events | Complete. Both acceptance criteria assert in `tests/events.test.ts`: no event is below the horizon during darkness, and the top-scored event for August 2026 is the Perseid peak (December's is the Geminids). |
+| 3 — Depth | Mostly delivered alongside Phases 1–2: object detail cards, tap-to-identify, the DSO layer and the Milky Way band are all in. **Search is not** — the location search exists, but there is no object search. |
+| 4 — Optional | Not started. No satellites, no PWA install, no permalinks, no printable night plan. |

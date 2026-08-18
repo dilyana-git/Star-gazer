@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "build:catalogs": "tsx scripts/build-catalogs.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:fonts": "tsx scripts/fetch-fonts.ts"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",
