@@ -35,12 +35,15 @@ it when you want to refresh the catalogues; downloads are cached in `.cache/`.
 |---|---|
 | `npm run dev` | Vite dev server |
 | `npm run build` | Typecheck and production build |
-| `npm test` | The correctness suite — 100+ tests |
+| `npm test` | The correctness suite — fast, hermetic, 140+ tests |
+| `npm run test:e2e` | Builds, then drives a real browser: offline, permalinks, search, print |
 | `npm run build:catalogs` | Rebuild the star, constellation, DSO, shower and city data |
 | `npm run build:fonts` | Re-vendor the three typefaces into `public/fonts/` |
 
 Everything is bundled. Once loaded, the app needs no network at all — no API
-keys, no rate limits, nothing to go stale.
+keys, no rate limits, nothing to go stale. It installs as a PWA and a service
+worker precaches every catalogue, so it works with the network cut; there is an
+end-to-end test that proves it, because the first version silently did not.
 
 ---
 
@@ -59,6 +62,9 @@ src/
     labels.ts       greedy label placement against an occupancy grid
     colors.ts       the palette, and star colour from B−V
   data/
+    search.ts       the object index — names, designations, catalogue numbers
+  state/
+    permalink.ts    the whole view, encoded into the URL hash
     generated/      build artifacts — committed, never fetched at runtime
   ui/               three surfaces: the sky, the ribbon, the events panel
 scripts/

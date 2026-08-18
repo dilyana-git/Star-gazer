@@ -5,11 +5,14 @@ import { NightRibbon } from './ui/NightRibbon';
 import { EventsPanel } from './ui/EventsPanel';
 import { DetailCard } from './ui/DetailCard';
 import { LayerToggles } from './ui/LayerToggles';
+import { ObjectSearch } from './ui/ObjectSearch';
 import { NightVisionFilter } from './ui/NightVisionFilter';
+import { NightPlan } from './ui/NightPlan';
+import { ShareBar } from './ui/ShareBar';
 import { loadSkyData, type SkyData } from './data/catalog';
 import { nightWindowFor } from './astro/twilight';
 import { findEvents } from './astro/events';
-import { useStore } from './state/store';
+import { useStore, syncPermalinkToUrl } from './state/store';
 import { DAY } from './astro/time';
 
 export default function App() {
@@ -29,6 +32,10 @@ export default function App() {
   useEffect(() => {
     loadSkyData().then(setData, (e: Error) => setError(e.message));
   }, []);
+
+  // Keep the address bar showing the sky on screen, so copying the URL at any
+  // moment shares what is being looked at.
+  useEffect(syncPermalinkToUrl, []);
 
   const night = useMemo(() => nightWindowFor(site, instant), [site, instant]);
 
@@ -63,6 +70,7 @@ export default function App() {
       <header className="masthead">
         <h1>Sidereal</h1>
         <p className="masthead-sub">{site.label}</p>
+        <ShareBar />
       </header>
 
       <Controls />
@@ -77,6 +85,7 @@ export default function App() {
             </div>
           )}
           <LayerToggles />
+          {data && <ObjectSearch data={data} />}
           {selected && <DetailCard target={selected} />}
         </section>
 
@@ -106,6 +115,8 @@ export default function App() {
           setInstant(event.peak);
         }}
       />
+
+      <NightPlan site={site} night={night} events={tonight} />
     </div>
   );
 }

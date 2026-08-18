@@ -12,6 +12,8 @@ import { bodyVectorEqj, moonAngularRadius, rotationEqjToHor } from '../astro/fra
 import { darkness, limitingMagnitude } from '../astro/twilight';
 import type { Instant, Site } from '../astro/types';
 import type { SkyData } from '../data/catalog';
+import type { SkyObject } from '../astro/objects';
+import { describePlanet } from '../astro/objects';
 import { alpha, PALETTE, STAR_COLORS, starColorBucket } from './colors';
 import { drawLabels, LabelPlacer, PRIORITY, type PlacedLabel } from './labels';
 import { createProjector, type Point, type Projector } from './project';
@@ -66,19 +68,11 @@ export interface RenderResult {
   targets: PickTarget[];
 }
 
-export interface PickTarget {
-  /** Canvas position, for hit-testing. */
+/** A {@link SkyObject} plus where it landed on the canvas, for hit-testing. */
+export interface PickTarget extends SkyObject {
   x: number;
   y: number;
   r: number;
-  kind: 'star' | 'planet' | 'moon' | 'sun' | 'dso';
-  name: string;
-  detail: string;
-  /** Where it is in the sky, so the detail card can say so and centre on it. */
-  altitude: number;
-  azimuth: number;
-  /** Index into the star catalogue, where applicable. */
-  index?: number;
 }
 
 const PLANETS: Array<{ body: A.Body; name: string; color: string }> = [
@@ -718,7 +712,7 @@ function drawSolarSystem(
       kind: 'planet',
       ...where,
       name: planet.name,
-      detail: `Magnitude ${illum.mag.toFixed(1)} — ${illum.geo_dist.toFixed(2)} AU away`,
+      detail: describePlanet(planet.body, instant),
     });
 
     if (withLabels && illum.mag < 6) {

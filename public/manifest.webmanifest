@@ -1,0 +1,15 @@
+{
+  "name": "Sidereal",
+  "short_name": "Sidereal",
+  "description": "A local sky atlas: what's overhead, and what's worth going outside for.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#050311",
+  "theme_color": "#050311",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "./icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

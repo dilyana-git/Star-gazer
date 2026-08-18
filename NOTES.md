@@ -116,7 +116,26 @@ objects.** A magnitude-8 galaxy spread over 20 arcminutes has its light smeared
 over four hundred times the area of a magnitude-8 point source. Point-like
 objects are still gated on magnitude.
 
-## 5. Test gaps
+## 5. Satellites are not built (spec §7.3, §11 Phase 4)
+
+`celestrak.org` and `celestrak.com` are both blocked by this environment's
+egress policy, exactly as `codeberg.org` and `download.geonames.org` are. TLEs
+are the entire input to an SGP4 pass predictor, and they go stale within days.
+
+The module could have been written blind, but it could not have been *run* — not
+once, not against a single real element set. Shipping untested orbital
+propagation that reports "the ISS passes overhead at 21:14" would be the failure
+mode §12 opens with: confidently wrong, and nobody can tell. It is left out, and
+the spec's own framing supports that — satellites are the one part of the app
+that breaks the offline guarantee and were specified as an optional module that
+degrades to absence.
+
+The shape it should take when the TLE source is reachable: `satellite.js` for
+SGP4, a fetch with a cached fallback and a visible "elements are N days old"
+warning, and `detect()` returning nothing at all rather than stale predictions
+once the elements age past a few days.
+
+## 6. Test gaps
 
 Per §12.2, a fabricated fixture is worse than a missing one. Gaps as they stand:
 
@@ -131,12 +150,27 @@ Per §12.2, a fabricated fixture is worse than a missing one. Gaps as they stand
   `SearchLocalSolarEclipse`, which carry their own upstream test suite; what is
   tested here is our handling of the result, not the ephemeris.
 
-## 6. Phase status (spec §11)
+### End-to-end tests, and why they exist
+
+`tests/e2e.test.ts` (run with `npm run test:e2e`) drives a real production build
+in a real browser. It was added after the offline guarantee — the entire reason
+every catalogue is bundled — turned out to be silently broken:
+`caches.match(request)` honours the `Vary` header, most static hosts send
+`Vary: Origin` (Vite's own preview server does), and so every cached asset
+missed. Everything typechecked, all 143 unit tests passed, and the app was a
+blank page with the network cut. The fix is `{ ignoreVary: true }`; the test is
+there so it cannot regress silently again.
+
+The same suite covers the permalink round trip, which had its own version of the
+same bug: pasting a shared link while the app is already open is a
+same-document hash change, so reading the hash once at startup ignored it.
+
+## 7. Phase status (spec §11)
 
 | Phase | State |
 |---|---|
 | 0 — Data | Complete. `npm run build:catalogs` runs clean from an empty `generated/`; counts, magnitude range and file sizes asserted in `tests/catalogs.test.ts`. |
 | 1 — The sky | Complete. The §12.1 invariant suite passes in full. Verified by eye against known positions for Sofia on 20 January 2026: Orion and Sirius due south, Leo rising in the east *on the left*, Polaris at the observer's latitude, cardinal points on the ring. |
 | 2 — Events | Complete. Both acceptance criteria assert in `tests/events.test.ts`: no event is below the horizon during darkness, and the top-scored event for August 2026 is the Perseid peak (December's is the Geminids). |
-| 3 — Depth | Mostly delivered alongside Phases 1–2: object detail cards, tap-to-identify, the DSO layer and the Milky Way band are all in. **Search is not** — the location search exists, but there is no object search. |
-| 4 — Optional | Not started. No satellites, no PWA install, no permalinks, no printable night plan. |
+| 3 — Depth | Complete. Object detail cards, the DSO layer and the Milky Way band came in with Phases 1–2; object search and "what am I looking at" landed after. Search covers named stars, Bayer and Flamsteed designations (including spelled-out Greek — "alpha Ori"), Messier/NGC/IC numbers, common names, planets, and constellations under both Latin and English names, and is fully keyboard-driven (`/` to focus). A tap on empty sky names the constellation the point falls in. |
+| 4 — Optional | Delivered except satellites. Shareable permalinks encode site, time and view in the URL hash and are honoured on both cold load and same-document paste. A PWA manifest plus a build-time-generated service worker precache the shell and every catalogue, so the app installs and runs with the network cut — verified end to end. A printable night plan renders times, dark windows and the ranked events as a paper sheet. **Satellites are not built** — see §5. |

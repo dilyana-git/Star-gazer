@@ -119,6 +119,29 @@ select {
   letter-spacing: 0.02em;
 }
 
+.share {
+  margin-left: auto;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.share button {
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transition: color 120ms, border-color 120ms;
+}
+
+.share button:hover {
+  color: var(--gold-lit);
+  border-color: var(--rule-strong);
+}
+
 /* ── controls ───────────────────────────────────────────────────────────── */
 
 .controls {
@@ -381,7 +404,7 @@ select {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
-  max-width: 60%;
+  max-width: calc(100% - 21rem);
 }
 
 .layer-toggle {
@@ -409,6 +432,103 @@ select {
 .layer-reset {
   color: var(--gold);
   border-color: var(--rule-strong);
+}
+
+/* object search */
+
+.search {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: min(19rem, calc(100% - 1.4rem));
+  z-index: 12;
+}
+
+.search-input {
+  width: 100%;
+  background: rgba(5, 3, 17, 0.82);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 0.32rem 0.55rem;
+  font-size: 0.8rem;
+  color: var(--cream);
+}
+
+.search-input::placeholder {
+  color: var(--ink-faint);
+}
+
+.search-input:hover {
+  border-color: var(--rule-strong);
+}
+
+.search-results {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  max-height: 22rem;
+  overflow-y: auto;
+  background: #0b0722;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
+}
+
+.search-empty {
+  padding: 0.6rem 0.7rem;
+  font-size: 0.76rem;
+  color: var(--ink-faint);
+}
+
+.search-hit {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.35rem 0.6rem;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.search-hit.is-active {
+  background: rgba(201, 162, 76, 0.13);
+}
+
+.search-mark {
+  flex: none;
+  width: 1rem;
+  color: var(--gold);
+  font-size: 0.8rem;
+}
+
+.search-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.search-label {
+  display: block;
+  font-size: 0.88rem;
+  color: var(--cream);
+}
+
+.search-hint {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-where {
+  flex: none;
+  font-size: 0.66rem;
+  color: var(--gold);
 }
 
 /* detail card */
@@ -786,6 +906,21 @@ select {
   }
 }
 
+@media (max-width: 700px) {
+  /* Not enough width to sit the search beside the layer chips: give it the
+     full row and drop the chips underneath it. */
+  .search {
+    left: 0.7rem;
+    right: 0.7rem;
+    width: auto;
+  }
+
+  .layers {
+    top: 2.9rem;
+    max-width: calc(100% - 1.4rem);
+  }
+}
+
 @media (max-width: 460px) {
   body {
     font-size: 13px;
@@ -812,6 +947,125 @@ select {
   .event-data,
   .event-breakdown {
     margin-left: 0;
+  }
+}
+
+/* ── print ──────────────────────────────────────────────────────────────── */
+
+/* The plan is in the page at all times so there is no second rendering path to
+   keep in step; it is simply not shown until somebody prints. */
+.night-plan {
+  display: none;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .app > *:not(.night-plan) {
+    display: none !important;
+  }
+
+  .app {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .night-plan {
+    display: block;
+    color: #000;
+    background: #fff;
+    font-family: var(--body);
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+
+  .night-plan h1 {
+    font-family: var(--display);
+    font-size: 20pt;
+    font-weight: 600;
+    margin: 0 0 0.15rem;
+  }
+
+  .night-plan h2 {
+    font-family: var(--display);
+    font-size: 13pt;
+    font-weight: 600;
+    margin: 1.2rem 0 0.35rem;
+    padding-bottom: 0.15rem;
+    border-bottom: 0.5pt solid #000;
+  }
+
+  .night-plan header p {
+    margin: 0;
+    font-size: 9pt;
+  }
+
+  .night-plan table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 34rem;
+  }
+
+  .night-plan th {
+    text-align: left;
+    font-weight: 400;
+    width: 11rem;
+    padding: 0.1rem 0;
+  }
+
+  .night-plan td {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    padding: 0.1rem 0;
+  }
+
+  .night-plan-note {
+    font-style: italic;
+    margin: 0.5rem 0 0;
+  }
+
+  .night-plan-events {
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+
+  .night-plan-events li {
+    margin-bottom: 0.65rem;
+    /* Never split an event across a page break — the detail without its title
+       is useless in a field. */
+    break-inside: avoid;
+  }
+
+  .night-plan-events p {
+    margin: 0;
+  }
+
+  .night-plan-event-head span {
+    display: block;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 8.5pt;
+  }
+
+  .night-plan footer {
+    margin-top: 1.4rem;
+    padding-top: 0.4rem;
+    border-top: 0.5pt solid #000;
+    font-size: 8pt;
+  }
+
+  /* Red-light mode is for a screen in the dark, not for a sheet of paper. */
+  .night-mode {
+    filter: none;
+  }
+
+  @page {
+    margin: 16mm;
   }
 }
 

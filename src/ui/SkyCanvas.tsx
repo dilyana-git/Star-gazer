@@ -5,7 +5,10 @@
  * Redraws on state change and during interaction, never on a timer.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import * as A from 'astronomy-engine';
 import { renderSky, type PickTarget, type RenderResult } from '../render/sky';
+import { compassPoint, horizontalToEqj } from '../astro/frames';
+import type { SkyObject } from '../astro/objects';
 import type { SkyData } from '../data/catalog';
 import { useStore } from '../state/store';
 
@@ -122,10 +125,15 @@ export function SkyCanvas({ data, reveal }: Props) {
       const result = resultRef.current;
       if (canvas && result) {
         const rect = canvas.getBoundingClientRect();
-        select(pick(result.targets, e.clientX - rect.left, e.clientY - rect.top));
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const hit = pick(result.targets, x, y);
+        // Nothing under the pointer is still an answer: whereabouts in the sky
+        // did they just point? Every direction is inside some constellation.
+        select(hit ?? identifyRegion(result, x, y, site, instant));
       }
     }
-  }, [select]);
+  }, [select, site, instant]);
 
   const onWheel = useCallback(
     (e: React.WheelEvent<HTMLCanvasElement>) => {
@@ -181,6 +189,36 @@ export function SkyCanvas({ data, reveal }: Props) {
       )}
     </div>
   );
+}
+
+/**
+ * What region of the sky a bare point falls in. The IAU boundaries partition the
+ * whole celestial sphere, so this always has an answer — which is the point: a
+ * tap on empty sky should tell you where you are looking, not nothing.
+ */
+function identifyRegion(
+  result: RenderResult,
+  x: number,
+  y: number,
+  site: Parameters<typeof horizontalToEqj>[0],
+  instant: number,
+): SkyObject | null {
+  const horizontal = result.projector.unproject(x - result.centre.x, y - result.centre.y);
+  if (!Number.isFinite(horizontal.altitude)) return null;
+
+  const { ra, dec } = horizontalToEqj(site, instant, horizontal.altitude, horizontal.azimuth);
+  const constellation = A.Constellation(ra, dec);
+
+  return {
+    kind: 'constellation',
+    name: constellation.name,
+    detail:
+      horizontal.altitude < 0
+        ? `You pointed below the horizon, into the ground. ${constellation.name} is under your feet just now.`
+        : `You are looking into ${constellation.name}, ${Math.round(horizontal.altitude)}° above the horizon in the ${compassPoint(horizontal.azimuth)}.`,
+    altitude: horizontal.altitude,
+    azimuth: horizontal.azimuth,
+  };
 }
 
 /** Nearest target under the pointer, if any is close enough to have been meant. */

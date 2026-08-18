@@ -160,6 +160,7 @@ function describeType(dso: Dso): string {
   if (dso.type.includes('supernova')) return 'The wreckage of a star that exploded.';
   if (dso.type.includes('nebulosity')) return 'A cluster of young stars still wrapped in the gas that made them.';
   if (dso.type.includes('nebula')) return 'A cloud of gas and dust, lit by the stars inside it.';
+  if (dso.type.includes('HII')) return 'A vast cloud of glowing hydrogen, lit from within by hot young stars.';
   if (dso.type.includes('association')) return 'A sprawling association of stars sharing a common origin.';
   if (dso.type.includes('asterism')) return 'A chance alignment rather than a true group — but a memorable shape.';
   return `Catalogued as ${dso.type === 'HII region' ? 'an' : 'a'} ${dso.type}.`;

@@ -1,17 +1,9 @@
 /** What you tapped on. */
 import { compassPoint } from '../astro/frames';
-import type { PickTarget } from '../render/sky';
+import { KIND_LABEL, type SkyObject } from '../astro/objects';
 import { useStore } from '../state/store';
 
-const KIND_LABEL: Record<PickTarget['kind'], string> = {
-  star: 'Star',
-  planet: 'Planet',
-  moon: 'Moon',
-  sun: 'Sun',
-  dso: 'Deep sky object',
-};
-
-export function DetailCard({ target }: { target: PickTarget }) {
+export function DetailCard({ target }: { target: SkyObject }) {
   const select = useStore((s) => s.select);
   const lookAt = useStore((s) => s.lookAt);
 

@@ -11,7 +11,8 @@
     "build:catalogs": "tsx scripts/build-catalogs.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:fonts": "tsx scripts/fetch-fonts.ts"
+    "build:fonts": "tsx scripts/fetch-fonts.ts",
+    "test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
     "astronomy-engine": "^2.1.19",
@@ -26,6 +27,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "oxlint": "^1.75.0",
+    "playwright": "^1.62.1",
     "tsx": "^4.23.12",
     "typescript": "~6.0.2",
     "vite": "^8.2.0",

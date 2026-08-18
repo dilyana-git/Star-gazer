@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sidereal">
+  <rect width="512" height="512" fill="#050311"/>
+  <g fill="#ede4d0">
+    <circle cx="256" cy="168" r="8"/>
+    <circle cx="205" cy="230" r="5"/>
+    <circle cx="307" cy="230" r="5"/>
+    <circle cx="214" cy="296" r="11"/>
+    <circle cx="256" cy="296" r="6"/>
+    <circle cx="298" cy="296" r="6"/>
+    <circle cx="196" cy="354" r="7"/>
+    <circle cx="316" cy="350" r="9"/>
+  </g>
+  <g stroke="#c9a24c" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M256 168 L205 230 L214 296 L196 354"/>
+    <path d="M256 168 L307 230 L316 350"/>
+    <path d="M214 296 L256 296 L298 296"/>
+  </g>
+</svg>
