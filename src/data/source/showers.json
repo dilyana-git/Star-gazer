@@ -1,0 +1,30 @@
+{
+  "_source": "IMO Working List of Visual Meteor Showers. Hand-authored per spec §3.5.",
+  "_note": "Peaks are given as solar longitude (J2000), not calendar date: the calendar date of a peak drifts by roughly a day across the leap-year cycle, solar longitude does not. `begin`/`end` are also solar longitudes and may wrap past 360. `zhr` is the nominal peak zenithal hourly rate under a mag 6.5 sky; `r` is the population index.",
+  "_verify": "imo.net was unreachable from the build environment; see NOTES.md §1. Re-check these figures against the published IMO working list before relying on marginal showers.",
+  "showers": [
+    { "code": "QUA", "name": "Quadrantids", "ra": 230.0, "dec": 49.7, "peak": 283.15, "begin": 276.1, "end": 291.7, "zhr": 110, "r": 2.1, "parent": "2003 EH1" },
+    { "code": "LYR", "name": "Lyrids", "ra": 271.4, "dec": 33.6, "peak": 32.32, "begin": 24.0, "end": 39.7, "zhr": 18, "r": 2.1, "parent": "C/1861 G1 Thatcher" },
+    { "code": "PPU", "name": "π Puppids", "ra": 110.0, "dec": -45.0, "peak": 33.5, "begin": 25.0, "end": 38.0, "zhr": 5, "r": 2.0, "parent": "26P/Grigg–Skjellerup" },
+    { "code": "ETA", "name": "η Aquariids", "ra": 338.0, "dec": -1.0, "peak": 45.5, "begin": 28.8, "end": 67.0, "zhr": 50, "r": 2.4, "parent": "1P/Halley" },
+    { "code": "ELY", "name": "η Lyrids", "ra": 287.0, "dec": 43.7, "peak": 48.6, "begin": 42.6, "end": 53.4, "zhr": 3, "r": 3.0, "parent": "C/1983 H1 IRAS–Araki–Alcock" },
+    { "code": "JBO", "name": "June Boötids", "ra": 224.0, "dec": 48.0, "peak": 95.7, "begin": 91.1, "end": 100.1, "zhr": 2, "r": 2.2, "parent": "7P/Pons–Winnecke" },
+    { "code": "CAP", "name": "α Capricornids", "ra": 307.0, "dec": -10.0, "peak": 127.0, "begin": 101.0, "end": 142.6, "zhr": 5, "r": 2.5, "parent": "169P/NEAT" },
+    { "code": "SDA", "name": "Southern δ Aquariids", "ra": 340.0, "dec": -16.4, "peak": 125.0, "begin": 109.8, "end": 150.3, "zhr": 25, "r": 3.2, "parent": "96P/Machholz" },
+    { "code": "PER", "name": "Perseids", "ra": 48.2, "dec": 58.1, "peak": 140.0, "begin": 114.6, "end": 151.3, "zhr": 100, "r": 2.2, "parent": "109P/Swift–Tuttle" },
+    { "code": "KCG", "name": "κ Cygnids", "ra": 286.0, "dec": 59.0, "peak": 141.0, "begin": 130.7, "end": 152.2, "zhr": 3, "r": 3.0, "parent": "unknown" },
+    { "code": "AUR", "name": "Aurigids", "ra": 91.0, "dec": 39.0, "peak": 158.6, "begin": 155.1, "end": 162.9, "zhr": 6, "r": 2.5, "parent": "C/1911 N1 Kiess" },
+    { "code": "SPE", "name": "September ε Perseids", "ra": 48.0, "dec": 40.0, "peak": 166.7, "begin": 162.9, "end": 178.4, "zhr": 5, "r": 3.0, "parent": "unknown" },
+    { "code": "DRA", "name": "Draconids", "ra": 262.0, "dec": 55.7, "peak": 195.4, "begin": 192.6, "end": 196.5, "zhr": 5, "r": 2.6, "parent": "21P/Giacobini–Zinner" },
+    { "code": "STA", "name": "Southern Taurids", "ra": 32.0, "dec": 9.0, "peak": 196.5, "begin": 167.7, "end": 238.0, "zhr": 5, "r": 2.3, "parent": "2P/Encke" },
+    { "code": "ORI", "name": "Orionids", "ra": 95.0, "dec": 16.0, "peak": 208.0, "begin": 188.7, "end": 224.7, "zhr": 20, "r": 2.5, "parent": "1P/Halley" },
+    { "code": "NTA", "name": "Northern Taurids", "ra": 58.0, "dec": 22.0, "peak": 223.0, "begin": 206.5, "end": 258.2, "zhr": 5, "r": 2.3, "parent": "2P/Encke" },
+    { "code": "LEO", "name": "Leonids", "ra": 152.0, "dec": 22.0, "peak": 235.27, "begin": 223.7, "end": 248.0, "zhr": 10, "r": 2.5, "parent": "55P/Tempel–Tuttle" },
+    { "code": "AMO", "name": "α Monocerotids", "ra": 117.0, "dec": 1.0, "peak": 239.32, "begin": 232.8, "end": 242.9, "zhr": 5, "r": 2.4, "parent": "unknown" },
+    { "code": "PHO", "name": "Phoenicids", "ra": 18.0, "dec": -53.0, "peak": 254.25, "begin": 245.9, "end": 257.2, "zhr": 3, "r": 2.8, "parent": "289P/Blanpain" },
+    { "code": "PUP", "name": "Puppid–Velids", "ra": 123.0, "dec": -45.0, "peak": 255.0, "begin": 249.0, "end": 263.0, "zhr": 10, "r": 2.9, "parent": "unknown" },
+    { "code": "GEM", "name": "Geminids", "ra": 112.3, "dec": 32.5, "peak": 262.2, "begin": 252.0, "end": 268.2, "zhr": 150, "r": 2.6, "parent": "3200 Phaethon" },
+    { "code": "DLM", "name": "December Leonis Minorids", "ra": 161.0, "dec": 30.0, "peak": 268.2, "begin": 253.0, "end": 315.0, "zhr": 5, "r": 3.0, "parent": "C/1739 K1" },
+    { "code": "URS", "name": "Ursids", "ra": 217.0, "dec": 75.4, "peak": 270.7, "begin": 265.2, "end": 274.4, "zhr": 10, "r": 3.0, "parent": "8P/Tuttle" }
+  ]
+}
