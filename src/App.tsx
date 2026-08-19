@@ -7,6 +7,8 @@ import { DetailCard } from './ui/DetailCard';
 import { LayerToggles } from './ui/LayerToggles';
 import { ObjectSearch } from './ui/ObjectSearch';
 import { NightVisionFilter } from './ui/NightVisionFilter';
+import { PhoneShell } from './ui/PhoneShell';
+import { useIsPhone } from './ui/useDeviceOrientation';
 import { NightPlan } from './ui/NightPlan';
 import { ShareBar } from './ui/ShareBar';
 import { loadSkyData, type SkyData } from './data/catalog';
@@ -20,6 +22,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const reveal = useDarkAdaptation(data !== null);
 
+  const isPhone = useIsPhone();
   const site = useStore((s) => s.site);
   const instant = useStore((s) => s.instant);
   const nightMode = useStore((s) => s.nightMode);
@@ -60,6 +63,19 @@ export default function App() {
           If this is a fresh checkout, run <code>npm run build:catalogs</code> first.
         </p>
       </main>
+    );
+  }
+
+  // Two shells, not one squeezed. The phone is used outdoors, in the dark, one
+  // handed, with the sky as the whole point — a different situation, so a
+  // different information architecture (spec §14.1).
+  if (isPhone) {
+    return (
+      <div className={`app app-phone${nightMode ? ' night-mode' : ''}`}>
+        <NightVisionFilter />
+        <PhoneShell data={data} reveal={reveal} night={night} events={events} tonight={tonight} />
+        <NightPlan site={site} night={night} events={tonight} />
+      </div>
     );
   }
 

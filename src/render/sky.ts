@@ -124,6 +124,10 @@ export function renderSky(
 
   const rotation = rotationEqjToHor(site, instant);
   const limitingMag = limitingMagnitude(site, instant);
+  // What the *sky* allows is not always what the *screen* can show. On a phone
+  // the whole hemisphere lands in a disc a few hundred pixels across, and
+  // drawing every star the sky permits turns it into a grey wash.
+  const renderMag = densityLimitedMagnitude(limitingMag, radius / view.fieldRadius);
   const fullSky = view.fieldRadius >= 89.5 && view.centreAltitude >= 89.5;
 
   const dark = darkness(site, instant);
@@ -162,11 +166,11 @@ export function renderSky(
   if (layers.constellationLines) drawConstellationLines(ctx, data, rotation, projector);
   if (layers.ecliptic) drawEcliptic(ctx, site, instant, projector);
 
-  drawStars(ctx, data, rotation, projector, limitingMag, opts.reveal, p);
+  drawStars(ctx, data, rotation, projector, renderMag, opts.reveal, p);
 
-  if (layers.dsos) drawDsos(ctx, data, rotation, projector, limitingMag, placer, targets, cx, cy, p);
+  if (layers.dsos) drawDsos(ctx, data, rotation, projector, renderMag, placer, targets, cx, cy, p);
 
-  drawStarLabels(data, projector, limitingMag, placer, targets, cx, cy, p, layers.labels);
+  drawStarLabels(data, projector, renderMag, placer, targets, cx, cy, p, layers.labels);
   if (layers.labels) drawConstellationNames(data, rotation, projector, placer, cx, cy, p);
 
   drawSolarSystem(ctx, site, instant, projector, placer, targets, cx, cy, layers.labels);
@@ -284,6 +288,28 @@ function easeOut(t: number): number {
 }
 
 const TAU = Math.PI * 2;
+
+/**
+ * Cap the magnitude by how much room there is to draw it in.
+ *
+ * A dark-sky Bortle 2 evening genuinely reaches magnitude 7.3, and on a laptop
+ * that is a sky full of stars. Squeeze the same hemisphere into a phone-sized
+ * disc — under two pixels per degree — and those same stars overlap into a grey
+ * wash that shows less than a sparser chart would. This is not dishonesty about
+ * the sky; it is honesty about the screen, and zooming in lifts the cap again
+ * because the pixels per degree go up with it.
+ */
+export function densityLimitedMagnitude(limitingMag: number, pixelsPerDegree: number): number {
+  /** Above this there is room for everything the sky offers. */
+  const COMFORTABLE = 4.5;
+  if (pixelsPerDegree >= COMFORTABLE) return limitingMag;
+
+  // Roughly a magnitude and a bit for every halving of the available scale,
+  // and never more than three magnitudes, which still leaves the constellation
+  // figures intact.
+  const octaves = Math.log2(COMFORTABLE / Math.max(0.2, pixelsPerDegree));
+  return limitingMag - Math.min(3, octaves * 1.2);
+}
 
 /** Background colour for a given twilight depth, 1 = astronomical night. */
 function skyGround(dark: number): string {

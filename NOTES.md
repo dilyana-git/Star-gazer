@@ -57,8 +57,11 @@ needed.
 
 ## 3. Open decisions (spec §14) — as answered
 
-1. **Mobile priority** — desktop-first and responsive, *plus* a red night-vision
-   mode. Device orientation input and phone-first touch targets are out.
+1. **Mobile priority** — originally answered "desktop-first, plus red night
+   vision"; **revised on request to the full phone-first option**. §14.1 named
+   what that entails and all of it is built: device orientation as input,
+   phone-first information architecture, and 44px touch targets throughout. See
+   §7 below.
 2. **Historical range** — ±100 years around now. The time controls clamp to it.
 3. **Sky cultures** — the data pipeline is generic over Stellarium skycultures
    (`SKYCULTURES` in `scripts/sources.ts` is a list, and the artifacts are
@@ -165,7 +168,52 @@ The same suite covers the permalink round trip, which had its own version of the
 same bug: pasting a shared link while the app is already open is a
 same-document hash change, so reading the hash once at startup ignored it.
 
-## 7. Phase status (spec §11)
+## 7. The phone version (spec §14.1)
+
+Not the desktop layout squeezed — a second shell, chosen at `max-width: 760px`,
+for a different situation: outdoors, in the dark, one hand, sky-first.
+
+**Pointing the phone at the sky** is the reason it is worth building. It turns
+"40° up in the south-east" from an instruction you have to decode into something
+you just look at. Three things about the implementation are worth recording:
+
+- *The maths is a pure function* (`astro/orientation.ts`), because the
+  alternative is code that can only be exercised by standing in a field waving a
+  handset. `tests/orientation.test.ts` checks the six orientations you can
+  verify by holding a phone, plus the iOS compass conversion and the
+  no-gyroscope case.
+- *Screen rotation is deliberately not compensated for.* The device frame is
+  fixed to the hardware, so the back of the phone is device −Z whether the
+  picture is portrait or landscape. "Correcting" for `screen.orientation.angle`
+  is a tempting bug; there is a test that fails if someone adds it. The chart
+  also does not *roll* to match the handset — screen-up stays sky-up, which is
+  steadier to read and much less nauseating.
+- *Smoothing runs on the vector, not the angles.* Averaging an azimuth of 359
+  with one of 1 gives 180, which points due south. Also tested.
+
+Where the compass is only relative — Android without an absolute reading — the
+altitude is still right and the bearing is not, so the app says so rather than
+quietly pointing at the wrong part of the sky.
+
+**Star density is capped by the screen, not just by the sky.** A dark-sky
+evening genuinely reaches magnitude 7.3, and on a laptop that is a sky full of
+stars; squeezed into a phone-sized disc at under two pixels per degree, those
+same stars overlap into a grey wash that shows *less* than a sparser chart
+would. `densityLimitedMagnitude` trims the drawn magnitude by how much room
+there is to draw it in, and zooming lifts the cap again. This is not dishonesty
+about the sky — it is honesty about the screen, and it is the same argument as
+the Bortle slider and the daylight cap.
+
+**Two bugs the phone work surfaced in existing code**, both of which would have
+bitten on a real handset:
+
+- Pointer capture was taken and never released, on the sky canvas and on the
+  night ribbon. After one scrub, the canvas kept receiving every pointer event
+  anywhere on the page and the rest of the interface quietly stopped responding.
+- The floating actions sat behind the sheet, which hid the Point button — the
+  one control the phone version exists for.
+
+## 8. Phase status (spec §11)
 
 | Phase | State |
 |---|---|
@@ -173,4 +221,5 @@ same-document hash change, so reading the hash once at startup ignored it.
 | 1 — The sky | Complete. The §12.1 invariant suite passes in full. Verified by eye against known positions for Sofia on 20 January 2026: Orion and Sirius due south, Leo rising in the east *on the left*, Polaris at the observer's latitude, cardinal points on the ring. |
 | 2 — Events | Complete. Both acceptance criteria assert in `tests/events.test.ts`: no event is below the horizon during darkness, and the top-scored event for August 2026 is the Perseid peak (December's is the Geminids). |
 | 3 — Depth | Complete. Object detail cards, the DSO layer and the Milky Way band came in with Phases 1–2; object search and "what am I looking at" landed after. Search covers named stars, Bayer and Flamsteed designations (including spelled-out Greek — "alpha Ori"), Messier/NGC/IC numbers, common names, planets, and constellations under both Latin and English names, and is fully keyboard-driven (`/` to focus). A tap on empty sky names the constellation the point falls in. |
+| Phone | Complete. Orientation input, phone-first shell with a draggable three-position sheet, controls as a sheet, 44px targets, safe-area insets. Covered by `tests/orientation.test.ts` and five phone cases in `tests/e2e.test.ts` that drive a real iPhone-sized browser with synthetic sensor events. |
 | 4 — Optional | Delivered except satellites. Shareable permalinks encode site, time and view in the URL hash and are honoured on both cold load and same-document paste. A PWA manifest plus a build-time-generated service worker precache the shell and every catalogue, so the app installs and runs with the network cut — verified end to end. A printable night plan renders times, dark windows and the ranked events as a paper sheet. **Satellites are not built** — see §5. |

@@ -21,7 +21,15 @@ const KIND_MARK: Record<SearchHit['kind'], string> = {
   constellation: '△',
 };
 
-export function ObjectSearch({ data }: { data: SkyData }) {
+interface SearchProps {
+  data: SkyData;
+  /** Take the keyboard immediately — the phone opens this as its own mode. */
+  autoFocus?: boolean;
+  /** Called once something has been chosen, so a host can close itself. */
+  onDone?(): void;
+}
+
+export function ObjectSearch({ data, autoFocus = false, onDone }: SearchProps) {
   const site = useStore((s) => s.site);
   const instant = useStore((s) => s.instant);
   const select = useStore((s) => s.select);
@@ -29,7 +37,7 @@ export function ObjectSearch({ data }: { data: SkyData }) {
 
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(autoFocus);
   const inputRef = useRef<HTMLInputElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -37,6 +45,10 @@ export function ObjectSearch({ data }: { data: SkyData }) {
   const results = useMemo(() => search(index, query), [index, query]);
 
   useEffect(() => setActive(0), [query]);
+
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
 
   // `/` focuses the box from anywhere that is not already a text field.
   useEffect(() => {
@@ -70,12 +82,14 @@ export function ObjectSearch({ data }: { data: SkyData }) {
     setOpen(false);
     setQuery('');
     inputRef.current?.blur();
+    onDone?.();
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
       setOpen(false);
       inputRef.current?.blur();
+      onDone?.();
       return;
     }
     if (results.length === 0) return;

@@ -14,7 +14,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { chromium, type Browser } from 'playwright';
+import { chromium, devices, type Browser } from 'playwright';
 
 const PORT = 4179;
 const ORIGIN = `http://localhost:${PORT}`;
@@ -141,6 +141,16 @@ describe('the app in a browser', () => {
     await context.close();
   }, 90_000);
 
+  it('keeps the desktop layout on a desktop viewport', async () => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
+    await page.goto(ORIGIN, { waitUntil: 'networkidle' });
+    await page.waitForSelector('canvas.sky-canvas');
+
+    expect(await page.locator('.controls').count()).toBe(1);
+    expect(await page.locator('.phone').count()).toBe(0);
+    await page.close();
+  }, 60_000);
+
   it('has a night plan ready to print', async () => {
     const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
     await page.goto(ORIGIN, { waitUntil: 'networkidle' });
@@ -158,4 +168,136 @@ describe('the app in a browser', () => {
 
     await page.close();
   }, 60_000);
+});
+
+describe('the phone version', () => {
+  const openPhone = async () => {
+    const context = await browser.newContext({ ...devices['iPhone 13'], hasTouch: true, isMobile: true });
+    const page = await context.newPage();
+    const problems: string[] = [];
+    page.on('pageerror', (e) => problems.push(e.message));
+
+    await page.goto(`${ORIGIN}/#at=42.6977,23.3219,550&b=4&t=1768939200&l=Sofia`, {
+      waitUntil: 'networkidle',
+    });
+    await page.waitForSelector('canvas.sky-canvas', { timeout: 20_000 });
+    await page.waitForTimeout(1800);
+    return { context, page, problems };
+  };
+
+  it('serves a phone-first shell, not the desktop one squeezed', async () => {
+    const { context, page, problems } = await openPhone();
+
+    expect(await page.locator('.phone').count()).toBe(1);
+    expect(await page.locator('.sheet').count()).toBe(1);
+    // The desktop control bar and events column have no business here.
+    expect(await page.locator('.controls').count()).toBe(0);
+    expect(await page.locator('.stage').count()).toBe(0);
+    expect(problems).toEqual([]);
+
+    await context.close();
+  }, 60_000);
+
+  it('gives every control the 44px touch target the spec asks for', async () => {
+    const { context, page } = await openPhone();
+
+    const tooSmall = await page.evaluate(() => {
+      const bad: string[] = [];
+      const selectors = ['.phone-status', '.fab', '.sheet-grip'];
+      for (const selector of selectors) {
+        for (const el of document.querySelectorAll(selector)) {
+          const r = el.getBoundingClientRect();
+          if (r.height < 44 || r.width < 44) bad.push(`${selector} ${r.width}×${r.height}`);
+        }
+      }
+      return bad;
+    });
+    expect(tooSmall).toEqual([]);
+
+    await context.close();
+  }, 60_000);
+
+  it('cycles the sheet through its three positions on a tap', async () => {
+    const { context, page } = await openPhone();
+    const top = async () => (await page.locator('.sheet').boundingBox())!.y;
+
+    const peek = await top();
+    await page.tap('.sheet-grip');
+    await page.waitForTimeout(500);
+    const half = await top();
+    await page.tap('.sheet-grip');
+    await page.waitForTimeout(500);
+    const full = await top();
+
+    // Each tap lifts the sheet further up the screen...
+    expect(half).toBeLessThan(peek - 50);
+    expect(full).toBeLessThan(half - 50);
+    expect(await page.locator('.event').count()).toBeGreaterThan(0);
+
+    // ...and the third wraps back down, so one control does the whole job.
+    await page.tap('.sheet-grip');
+    await page.waitForTimeout(500);
+    expect(await top()).toBeCloseTo(peek, -1);
+
+    await context.close();
+  }, 60_000);
+
+  it('opens where-and-when from the status line', async () => {
+    const { context, page } = await openPhone();
+
+    await page.tap('.phone-status');
+    await page.waitForSelector('.controls-sheet');
+    expect(await page.textContent('.controls-sheet-head h2')).toBe('Where and when');
+
+    await page.tap('.controls-close');
+    await page.waitForTimeout(400);
+    expect(await page.locator('.controls-sheet').count()).toBe(0);
+
+    await context.close();
+  }, 60_000);
+
+  it('follows the handset when you point it at the sky', async () => {
+    const { context, page, problems } = await openPhone();
+
+    await page.tap('.fab-primary');
+    await page.waitForTimeout(400);
+
+    // Feed the sensor synthetically: alpha 225 is a bearing of 135 (south-east),
+    // and beta 105 aims 15° above the horizon. The conversion itself is covered
+    // by tests/orientation.test.ts; what is checked here is that it reaches the
+    // view at all.
+    await page.evaluate(() => {
+      const fire = () => {
+        const e = new Event('deviceorientationabsolute');
+        Object.defineProperties(e, {
+          alpha: { value: 225 },
+          beta: { value: 105 },
+          gamma: { value: 0 },
+          absolute: { value: true },
+        });
+        window.dispatchEvent(e);
+      };
+      // Enough readings for the smoothing to settle.
+      for (let i = 0; i < 80; i++) setTimeout(fire, i * 8);
+    });
+    await page.waitForTimeout(1400);
+
+    expect(await page.getAttribute('.fab-primary', 'aria-pressed')).toBe('true');
+
+    const view = /v=([^&]*)/.exec(decodeURIComponent(new URL(page.url()).hash))![1];
+    const [altitude, azimuth, field] = view.split(',').map(Number);
+    expect(altitude).toBeCloseTo(15, 0);
+    expect(azimuth).toBeCloseTo(135, 0);
+    // Pointing at a patch of sky zooms to a patch-sized field.
+    expect(field).toBeLessThan(45);
+
+    // Stopping returns to the whole sky.
+    await page.tap('.fab-primary');
+    await page.waitForTimeout(500);
+    expect(await page.getAttribute('.fab-primary', 'aria-pressed')).toBe('false');
+    expect(decodeURIComponent(new URL(page.url()).hash)).toContain('v=90,0,90');
+    expect(problems).toEqual([]);
+
+    await context.close();
+  }, 90_000);
 });

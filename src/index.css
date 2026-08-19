@@ -950,6 +950,407 @@ select {
   }
 }
 
+/* ── phone ──────────────────────────────────────────────────────────────── */
+
+/*
+ * A different layout for a different situation: outdoors, in the dark, one
+ * hand, and the sky is the whole point. Every target here is at least 44px,
+ * and the safe-area insets keep the controls clear of the notch and the home
+ * indicator (spec §14.1).
+ */
+
+:root {
+  --tap: 44px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+.app-phone {
+  display: block;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.phone {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100dvh;
+}
+
+.phone-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: var(--tap);
+  padding: calc(0.4rem + var(--safe-top)) calc(0.9rem + var(--safe-right)) 0.4rem
+    calc(0.9rem + var(--safe-left));
+  background: rgba(5, 3, 17, 0.85);
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.phone-status-where {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  color: var(--gold-lit);
+}
+
+.phone-status-when {
+  flex: none;
+  font-size: 0.95rem;
+  color: var(--cream);
+}
+
+.phone-status-more {
+  flex: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+
+.phone-sky {
+  position: relative;
+  min-height: 0;
+}
+
+.phone-sky .sky-surface {
+  position: absolute;
+  /* Stop above the sheet's resting edge, so the full-sky disc is centred in the
+     part of the screen you can actually see rather than half-under the list. */
+  inset: 0 0 var(--sheet-peek, 152px) 0;
+}
+
+/*
+ * Floating actions, sitting just above the sheet's resting edge. Without the
+ * peek offset they hide behind it, which loses the Point button — the one
+ * control the phone version exists for.
+ */
+.phone-actions {
+  position: absolute;
+  right: calc(0.8rem + var(--safe-right));
+  bottom: calc(var(--sheet-peek, 128px) + 0.9rem);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.fab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0.4rem;
+  background: rgba(11, 7, 34, 0.92);
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  color: var(--cream);
+  cursor: pointer;
+}
+
+.fab-primary {
+  min-width: 62px;
+  min-height: 62px;
+  color: var(--gold-lit);
+}
+
+.fab-primary.is-on {
+  background: var(--gold-lit);
+  border-color: var(--gold-lit);
+  color: var(--void);
+}
+
+.fab-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.phone-search {
+  position: absolute;
+  top: 0.6rem;
+  left: calc(0.7rem + var(--safe-left));
+  right: calc(0.7rem + var(--safe-right));
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.phone-search .search {
+  position: static;
+  width: auto;
+}
+
+.phone-search .search-input {
+  min-height: var(--tap);
+  font-size: 16px; /* Anything smaller makes iOS zoom the page on focus. */
+}
+
+.phone-search .search-hit {
+  min-height: var(--tap);
+}
+
+.phone-warning {
+  position: absolute;
+  top: 0.6rem;
+  left: calc(0.7rem + var(--safe-left));
+  right: calc(0.7rem + var(--safe-right));
+  z-index: 8;
+  margin: 0;
+  padding: 0.5rem 0.65rem;
+  background: rgba(11, 7, 34, 0.94);
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  font-size: 0.78rem;
+  color: var(--gold);
+}
+
+/* the sheet */
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  height: 78dvh;
+  background: #090619;
+  border-top: 1px solid var(--rule-strong);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.55);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  touch-action: none;
+}
+
+.sheet.is-dragging {
+  transition: none;
+}
+
+.sheet-grip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  /* A full-width 44px row, so the thin visible bar is not what you have to hit. */
+  min-height: var(--tap);
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: grab;
+  touch-action: none;
+}
+
+.sheet-handle {
+  display: block;
+  width: 46px;
+  height: 4px;
+  background: var(--rule-strong);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.sheet-header {
+  flex: none;
+  padding: 0 calc(0.8rem + var(--safe-right)) 0.5rem calc(0.8rem + var(--safe-left));
+}
+
+.sheet-count {
+  margin: 0.3rem 0 0;
+  font-size: 0.76rem;
+  color: var(--ink-dim);
+}
+
+.sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--safe-bottom);
+}
+
+.sheet .ribbon {
+  padding: 0;
+  border-top: 0;
+  background: none;
+}
+
+.sheet .events {
+  border-left: 0;
+  overflow: visible;
+}
+
+.sheet .events-head {
+  position: static;
+}
+
+/* controls sheet */
+
+.controls-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(5, 3, 17, 0.72);
+}
+
+.controls-sheet {
+  width: 100%;
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: 0.8rem calc(1rem + var(--safe-right)) calc(1.2rem + var(--safe-bottom))
+    calc(1rem + var(--safe-left));
+  background: #0b0722;
+  border-top: 1px solid var(--rule-strong);
+  border-radius: 14px 14px 0 0;
+}
+
+.controls-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.controls-sheet-head h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--gold-lit);
+}
+
+.controls-close {
+  font-size: 1.5rem;
+  line-height: 1;
+  background: none;
+  border: 0;
+  color: var(--ink-dim);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.9rem;
+}
+
+.field-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--ink-faint);
+}
+
+.field-label b {
+  color: var(--gold-lit);
+  font-weight: 500;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.field-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+
+.field-row > * {
+  flex: 1 1 0;
+}
+
+/* Every interactive thing on the phone clears the 44px floor. */
+.tap-target {
+  min-height: var(--tap);
+  padding: 0.55rem 0.7rem;
+  background: rgba(5, 3, 17, 0.7);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-size: 16px; /* Below 16px iOS zooms the page when a field is focused. */
+  color: var(--cream);
+  cursor: pointer;
+}
+
+.tap-target.wide {
+  width: 100%;
+}
+
+.tap-target.is-on {
+  color: var(--gold-lit);
+  border-color: var(--gold);
+}
+
+.controls-sheet input[type='range'] {
+  width: 100%;
+  height: var(--tap);
+  accent-color: var(--gold);
+}
+
+.city-results {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+}
+
+.city-results button {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: none;
+  text-align: left;
+}
+
+.city-meta {
+  color: var(--ink-faint);
+  font-size: 0.8rem;
+}
+
+.controls-foot {
+  margin: 0.4rem 0 0;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+
+.app-phone .detail-card {
+  right: calc(0.7rem + var(--safe-right));
+  left: calc(0.7rem + var(--safe-left));
+  bottom: auto;
+  top: 0.6rem;
+  width: auto;
+}
+
+.app-phone .detail-action,
+.app-phone .detail-close {
+  min-height: var(--tap);
+}
+
 /* ── print ──────────────────────────────────────────────────────────────── */
 
 /* The plan is in the page at all times so there is no second rendering path to

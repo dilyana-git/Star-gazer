@@ -56,6 +56,7 @@ src/
     twilight.ts      darkness, observing windows, limiting magnitude
     time.ts          the only place timezones exist
     objects.ts       one shared type for anything you can select
+    orientation.ts   device orientation → where the phone is aimed
     events/          the notability engine — one module per detector
   render/
     project.ts       stereographic projection, full-sky and zoomed
@@ -69,7 +70,7 @@ src/
   state/
     store.ts         the application state
     permalink.ts     the whole view, encoded into the URL hash
-  ui/                three surfaces: the sky, the ribbon, the events panel
+  ui/                two shells — desktop, and a phone-first one (§14.1)
 scripts/
   build-catalogs.ts  the data pipeline
   fetch-fonts.ts     vendors the three typefaces, so nothing loads from a CDN
@@ -88,6 +89,12 @@ exactly that much, so the mistake cannot be reintroduced as a "simplification".
 **Mirroring.** A sky chart shows the dome from underneath. With north at the top
 of the screen, **east is on the left** — the opposite of a ground map. Get it
 wrong and everything renders plausibly but mirrored. There is an explicit test.
+
+**Pointing.** On a phone, hold it up and the chart follows. The conversion from
+`alpha`/`beta`/`gamma` to a direction in the sky is full of invisible sign
+errors, so it is a pure function with tests for the orientations you can check
+by holding a handset — including the one that catches "correcting" for screen
+rotation, which must *not* be done.
 
 ---
 

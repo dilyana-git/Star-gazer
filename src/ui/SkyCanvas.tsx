@@ -16,9 +16,15 @@ interface Props {
   data: SkyData;
   /** 0–1 dark-adaptation reveal; 1 once the opening animation has finished. */
   reveal: number;
+  /**
+   * When false, drag and zoom are ignored — the view is being driven by
+   * something else (the phone's compass) and a stray thumb should not fight it.
+   * Tapping to identify still works, because that is a question, not a control.
+   */
+  interactive?: boolean;
 }
 
-export function SkyCanvas({ data, reveal }: Props) {
+export function SkyCanvas({ data, reveal, interactive = true }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const resultRef = useRef<RenderResult | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
@@ -74,7 +80,8 @@ export function SkyCanvas({ data, reveal }: Props) {
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      e.currentTarget.setPointerCapture(e.pointerId);
+      if (!interactive) return;
       drag.current = {
         x: e.clientX,
         y: e.clientY,
@@ -82,7 +89,7 @@ export function SkyCanvas({ data, reveal }: Props) {
         az: view.centreAzimuth,
       };
     },
-    [view],
+    [view, interactive],
   );
 
   const onPointerMove = useCallback(
@@ -116,6 +123,11 @@ export function SkyCanvas({ data, reveal }: Props) {
   );
 
   const onPointerUp = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    // Hand the pointer back, or the canvas keeps receiving events meant for
+    // everything else on the page.
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
     const moved =
       drag.current && Math.hypot(e.clientX - drag.current.x, e.clientY - drag.current.y) > 4;
     drag.current = null;
@@ -137,16 +149,18 @@ export function SkyCanvas({ data, reveal }: Props) {
 
   const onWheel = useCallback(
     (e: React.WheelEvent<HTMLCanvasElement>) => {
+      if (!interactive) return;
       const next = view.fieldRadius * Math.exp(e.deltaY * 0.0012);
       setView({ fieldRadius: Math.max(2, Math.min(90, next)) });
     },
-    [setView, view.fieldRadius],
+    [setView, view.fieldRadius, interactive],
   );
 
   // Keyboard equivalents for every pointer gesture — part of the quality floor,
   // not an extra.
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLCanvasElement>) => {
+      if (!interactive) return;
       const step = view.fieldRadius / 6;
       const moves: Record<string, () => void> = {
         ArrowLeft: () => setView({ centreAzimuth: view.centreAzimuth - step }),
@@ -163,7 +177,7 @@ export function SkyCanvas({ data, reveal }: Props) {
         move();
       }
     },
-    [setView, view],
+    [setView, view, interactive],
   );
 
   return (
@@ -177,10 +191,13 @@ export function SkyCanvas({ data, reveal }: Props) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
         onPointerLeave={() => setHovered(null)}
         onWheel={onWheel}
         onKeyDown={onKeyDown}
-        style={{ cursor: hovered ? 'pointer' : drag.current ? 'grabbing' : 'grab' }}
+        style={{
+          cursor: !interactive ? 'default' : hovered ? 'pointer' : drag.current ? 'grabbing' : 'grab',
+        }}
       />
       {hovered && (
         <div className="sky-tooltip" style={{ left: hovered.x, top: hovered.y - 14 }}>

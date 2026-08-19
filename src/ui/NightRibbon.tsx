@@ -22,15 +22,26 @@ interface Props {
   focusedEventId: string | null;
   onScrub(instant: Instant): void;
   onSelectEvent(event: SkyEvent): void;
+  /** Shorter, with only the times that matter — for the phone's sheet header. */
+  compact?: boolean;
 }
 
 /** Samples across the night for the twilight gradient. */
 const SAMPLES = 160;
 
-export function NightRibbon({ site, night, instant, events, focusedEventId, onScrub, onSelectEvent }: Props) {
+export function NightRibbon({
+  site,
+  night,
+  instant,
+  events,
+  focusedEventId,
+  onScrub,
+  onSelectEvent,
+  compact = false,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [width, setWidth] = useState(0);
-  const height = 62;
+  const height = compact ? 48 : 62;
 
   // The ribbon shows the observing half of the day: from a little before sunset
   // to a little after sunrise. On a polar day there is no such bracket, so it
@@ -116,7 +127,8 @@ export function NightRibbon({ site, night, instant, events, focusedEventId, onSc
     ctx.font = '9px ui-monospace, IBM Plex Mono, monospace';
     ctx.textAlign = 'center';
     const hours = Math.ceil((to - from) / 3_600_000);
-    const stepHours = hours > 14 ? 3 : hours > 8 ? 2 : 1;
+    // Fewer ticks in the compact ribbon: the labels would collide otherwise.
+    const stepHours = compact ? (hours > 10 ? 4 : 2) : hours > 14 ? 3 : hours > 8 ? 2 : 1;
     for (let t = ceilToHour(from); t < to; t += stepHours * 3_600_000) {
       const x = Math.round(fraction(t, from, to) * width) + 0.5;
       ctx.beginPath();
@@ -145,7 +157,7 @@ export function NightRibbon({ site, night, instant, events, focusedEventId, onSc
       ctx.lineTo(px, height);
       ctx.stroke();
     }
-  }, [width, height, profile, moonSpans, night, instant, from, to, site.timezone]);
+  }, [width, height, profile, moonSpans, night, instant, from, to, site.timezone, compact]);
 
   const scrubFromClientX = useCallback(
     (clientX: number) => {
@@ -166,12 +178,22 @@ export function NightRibbon({ site, night, instant, events, focusedEventId, onSc
           ref={canvasRef}
           className="ribbon-canvas"
           onPointerDown={(e) => {
-            (e.target as HTMLElement).setPointerCapture(e.pointerId);
+            e.currentTarget.setPointerCapture(e.pointerId);
             dragging.current = true;
             scrubFromClientX(e.clientX);
           }}
           onPointerMove={(e) => dragging.current && scrubFromClientX(e.clientX)}
-          onPointerUp={() => (dragging.current = false)}
+          // Capture has to be handed back explicitly. Leaving it held means the
+          // canvas receives every later pointer event anywhere on the page, and
+          // the rest of the interface quietly stops responding.
+          onPointerUp={(e) => {
+            dragging.current = false;
+            e.currentTarget.releasePointerCapture(e.pointerId);
+          }}
+          onPointerCancel={(e) => {
+            dragging.current = false;
+            e.currentTarget.releasePointerCapture(e.pointerId);
+          }}
         />
 
         {events.map((event) => {
@@ -192,18 +214,28 @@ export function NightRibbon({ site, night, instant, events, focusedEventId, onSc
       </div>
 
       <div className="ribbon-legend mono">
-        <Marker label="Sunset" at={night.sunset} tz={site.timezone} />
-        <Marker label="Dusk" at={night.astronomicalDusk} tz={site.timezone} />
-        <Marker label="Dawn" at={night.astronomicalDawn} tz={site.timezone} />
-        <Marker label="Sunrise" at={night.sunrise} tz={site.timezone} />
-        <span className="ribbon-moon">
-          Moon {Math.round(night.moonIllumination * 100)}% ·{' '}
-          {night.moonrise ? `rises ${formatTime(night.moonrise, site.timezone)}` : 'no rise'} ·{' '}
-          {night.moonset ? `sets ${formatTime(night.moonset, site.timezone)}` : 'no set'}
-        </span>
+        {compact ? (
+          <>
+            <Marker label="Dusk" at={night.astronomicalDusk} tz={site.timezone} />
+            <Marker label="Dawn" at={night.astronomicalDawn} tz={site.timezone} />
+            <span className="ribbon-moon">Moon {Math.round(night.moonIllumination * 100)}%</span>
+          </>
+        ) : (
+          <>
+            <Marker label="Sunset" at={night.sunset} tz={site.timezone} />
+            <Marker label="Dusk" at={night.astronomicalDusk} tz={site.timezone} />
+            <Marker label="Dawn" at={night.astronomicalDawn} tz={site.timezone} />
+            <Marker label="Sunrise" at={night.sunrise} tz={site.timezone} />
+            <span className="ribbon-moon">
+              Moon {Math.round(night.moonIllumination * 100)}% ·{' '}
+              {night.moonrise ? `rises ${formatTime(night.moonrise, site.timezone)}` : 'no rise'} ·{' '}
+              {night.moonset ? `sets ${formatTime(night.moonset, site.timezone)}` : 'no set'}
+            </span>
+          </>
+        )}
       </div>
 
-      {night.darknessNote && <p className="ribbon-note">{night.darknessNote}</p>}
+      {night.darknessNote && !compact && <p className="ribbon-note">{night.darknessNote}</p>}
     </div>
   );
 }
